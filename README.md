@@ -5,3 +5,12 @@
 * SqlCommand e SqlData Reader
 
 # Dapper
+* Mapeando colunas e alias
+* Iniciando um INSERT
+* SQL Injection
+* SqlParameter
+* UPDATE
+
+# Imersao
+* Execute Many
+* Executando Procedures
