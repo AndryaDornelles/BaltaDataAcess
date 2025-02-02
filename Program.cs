@@ -16,12 +16,14 @@ namespace BaltaDataAccess
             // using cria um bloco de código que é executado e depois descartado
             using (var connection = new SqlConnection(connectionString))
             {
+                // ListCategories(connection);
                 // CreateCategory(connection); // Descomente para inserir uma nova categoria
                 // CreateManyCategory(connection); // Descomente para inserir muitas categorias
                 // UpdateCategory(connection); // Descomente para atualizar uma categoria
                 // DeleteCategory(connection); // Descomente para deletar uma categoria
-                ExecuteProcedure(connection); // Descomente para executar uma procedure
-                ListCategories(connection);
+                // ExecuteProcedure(connection); // Descomente para executar uma procedure
+                // ExecuteReadProcedure(connection);
+                ExecuteScalar(connection);
             }
         }
         // Metodo para listar categorias
@@ -171,6 +173,55 @@ namespace BaltaDataAccess
             var affectedRows = connection.Execute(procedure, pars, commandType: CommandType.StoredProcedure);
 
             Console.WriteLine($"{affectedRows} registros deletados");
+        }
+        static void ExecuteReadProcedure(SqlConnection connection)
+        {
+            var procedure = "[spGetCoursesByCategory]";
+            var pars = new { CategoryId = "09ce0b7b-cfca-497b-92c0-3290ad9d5142" };
+            var courses = connection.Query(procedure, pars, commandType: CommandType.StoredProcedure);
+
+            foreach (var item in courses)
+            {
+                Console.WriteLine(item.Title);
+            }
+        }
+        static void ExecuteScalar(SqlConnection connection)
+        {
+            //Instancia de categoria
+            var category = new Category();
+            // Atribuicao de valores
+            category.Title = "Amazon AWS";
+            category.Url = "amazon";
+            category.Summary = "Amazon AWS cloud";
+            category.Order = 8;
+            category.Description = "Amazon AWS descricao";
+            category.Featured = false;
+
+            //Query de insercao
+            // @ é um parametro que será substituido pelo valor da variavel
+            var insertSql = @"INSERT INTO [Category] 
+                              OUTPUT inserted.[Id]
+                            VALUES(
+                                NEWID(), 
+                                @Title,
+                                @Url, 
+                                @Summary, 
+                                @Order, 
+                                @Description, 
+                                @Featured) 
+                        SELECT SCOPE_IDENTITY()";
+
+            // Executa a query de inserção no banco de dados e retorna a quantidade de linhas afetadas
+            var id = connection.ExecuteScalar<Guid>(insertSql, new
+            {
+                category.Title,
+                category.Url,
+                category.Summary,
+                category.Order,
+                category.Description,
+                category.Featured
+            });
+            Console.WriteLine($"A categoria inserida foi: {id}");
         }
     }
 }
