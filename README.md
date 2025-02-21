@@ -19,3 +19,7 @@
 * Views
 * OneToOne
 * OneToMany
+* QuerMultiple
+* Select IN
+* Like
+* Transactions
