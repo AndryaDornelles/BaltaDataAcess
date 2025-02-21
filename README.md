@@ -14,3 +14,8 @@
 # Imersao
 * Execute Many
 * Executando Procedures
+* Lendo Procedures
+* ExecuteScalar
+* Views
+* OneToOne
+* OneToMany

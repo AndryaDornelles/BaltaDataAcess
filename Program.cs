@@ -22,8 +22,11 @@ namespace BaltaDataAccess
                 // UpdateCategory(connection); // Descomente para atualizar uma categoria
                 // DeleteCategory(connection); // Descomente para deletar uma categoria
                 // ExecuteProcedure(connection); // Descomente para executar uma procedure
-                // ExecuteReadProcedure(connection);
-                ExecuteScalar(connection);
+                // ExecuteReadProcedure(connection); // 
+                // ExecuteScalar(connection);
+                // ReadView(connection);
+                // OnetoOne(connection);
+                OnetoMany(connection);
             }
         }
         // Metodo para listar categorias
@@ -210,7 +213,6 @@ namespace BaltaDataAccess
                                 @Description, 
                                 @Featured) 
                         SELECT SCOPE_IDENTITY()";
-
             // Executa a query de inserção no banco de dados e retorna a quantidade de linhas afetadas
             var id = connection.ExecuteScalar<Guid>(insertSql, new
             {
@@ -222,6 +224,80 @@ namespace BaltaDataAccess
                 category.Featured
             });
             Console.WriteLine($"A categoria inserida foi: {id}");
+        }
+        static void ReadView(SqlConnection connection)
+        {
+            var sql = "SELECT * FROM [vwCourses]";
+            var courses = connection.Query(sql);
+
+            foreach (var item in courses)
+            {
+                Console.WriteLine($"{item.Id} -- {item.Title}");
+            }
+        }
+        static void OnetoOne(SqlConnection connection)
+        {
+            var sql = @"
+                SELECT * FROM [CareerItem] 
+                INNER JOIN [Course]
+                ON [CareerItem].[CourseId] = [Course].[Id]";
+
+            var items = connection.Query<CareerItem, Course, CareerItem>(
+                sql,
+                (careerItem, course) =>
+                {
+                    careerItem.Course = course;
+                    return careerItem;
+                }, splitOn: "Id");
+
+            foreach (var item in items)
+            {
+                Console.WriteLine($"{item.Title} - Curso: {item.Course}");
+            }
+        }
+        static void OnetoMany(SqlConnection connection)
+        {
+            var sql = @"
+               SELECT 
+                    [Career].[Id],
+                    [Career].[Title],
+                    [CareerItem].[CareerId],    
+                    [CareerItem].[Title]
+                FROM 
+                    [Career] 
+                INNER JOIN 
+                    [CareerItem] ON [CareerItem].[CareerId] = [Career].[Id]
+                ORDER BY 
+                    [Career].[Title]";
+
+            var careers = new List<Career>();
+            var items = connection.Query<Career, CareerItem, Career>(
+                sql,
+                (career, item) =>
+                {
+                    var car = careers.Where(x => x.Id == career.Id).FirstOrDefault();
+
+                    if (car == null)
+                    {
+                        car = career;
+                        car.Items.Add(item);
+                        careers.Add(car);
+                    }
+                    else
+                    {
+                        car.Items.Add(item);
+                    }
+                    return career;
+                }, splitOn: "CareerId");
+
+            foreach (var career in careers)
+            {
+                Console.WriteLine($"{career.Title}");
+                foreach (var item in career.Items)
+                {
+                    Console.WriteLine($"  -  {item.Title}");
+                }
+            }
         }
     }
 }
